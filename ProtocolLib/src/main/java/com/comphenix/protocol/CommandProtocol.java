@@ -19,14 +19,13 @@ package com.comphenix.protocol;
 
 import java.io.File;
 import java.io.IOException;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 
 import com.comphenix.protocol.error.ErrorReporter;
 import com.comphenix.protocol.events.PacketListener;
-import com.comphenix.protocol.metrics.Updater;
-import com.comphenix.protocol.metrics.Updater.UpdateType;
 import com.comphenix.protocol.timing.TimedListenerManager;
 import com.comphenix.protocol.timing.TimingReportGenerator;
 
@@ -40,29 +39,25 @@ class CommandProtocol extends CommandBase {
 	 * Name of this command.
 	 */
 	public static final String NAME = "protocol";
-	
+
 	private Plugin plugin;
-	private Updater updater;
 	private ProtocolConfig config;
 
-	public CommandProtocol(ErrorReporter reporter, Plugin plugin, Updater updater, ProtocolConfig config) {
+	public CommandProtocol(ErrorReporter reporter, Plugin plugin, ProtocolConfig config) {
 		super(reporter, CommandBase.PERMISSION_ADMIN, NAME, 1);
 		this.plugin = plugin;
-		this.updater = updater;
 		this.config = config;
 	}
-	
+
 	@Override
 	protected boolean handleCommand(CommandSender sender, String[] args) {
 		String subCommand = args[0];
-		
+
 		// Only return TRUE if we executed the correct command
 		if (subCommand.equalsIgnoreCase("config") || subCommand.equalsIgnoreCase("reload"))
 			reloadConfiguration(sender);
 		else if (subCommand.equalsIgnoreCase("check"))
-			checkVersion(sender);
-		else if (subCommand.equalsIgnoreCase("update"))
-			updateVersion(sender);
+			sender.sendMessage("ProtocolLib-Cauldron. Patched by kmecpp");
 		else if (subCommand.equalsIgnoreCase("timings"))
 			toggleTimings(sender, args);
 		else if (subCommand.equalsIgnoreCase("listeners"))
@@ -71,19 +66,11 @@ class CommandProtocol extends CommandBase {
 			return false;
 		return true;
 	}
-	
-	public void checkVersion(final CommandSender sender) {
-		performUpdate(sender, UpdateType.NO_DOWNLOAD);
-	}
-	
-	public void updateVersion(final CommandSender sender) {
-		performUpdate(sender, UpdateType.DEFAULT);
-	}
-	
+
 	// Display every listener on the server
 	private void printListeners(final CommandSender sender, String[] args) {
 		ProtocolManager manager = ProtocolLibrary.getProtocolManager();
-		
+
 		for (PacketListener listener : manager.getPacketListeners()) {
 			sender.sendMessage(ChatColor.GOLD + "Packet listeners:");
 			sender.sendMessage(ChatColor.GOLD + " " + listener);
@@ -94,35 +81,15 @@ class CommandProtocol extends CommandBase {
 			sender.sendMessage(ChatColor.GOLD + " " + listener);
 		}
 	}
-	
-	private void performUpdate(final CommandSender sender, UpdateType type) {
-		if (updater.isChecking()) {
-			sender.sendMessage(ChatColor.RED + "Already checking for an update.");
-			return;
-		}
-		
-		// Perform on an async thread
-		Runnable notify = new Runnable() {
-			@Override
-			public void run() {
-				sender.sendMessage(ChatColor.BLUE + "[ProtocolLib] " + updater.getResult());
-				
-				updater.removeListener(this);
-				updateFinished();
-			}
-		};
-		updater.start(type);
-		updater.addListener(notify);
-	}
-	
+
 	private void toggleTimings(CommandSender sender, String[] args) {
 		TimedListenerManager manager = TimedListenerManager.getInstance();
 		boolean state = !manager.isTiming(); // toggle
-		
+
 		// Parse the boolean parameter
 		if (args.length == 2) {
 			Boolean parsed = parseBoolean(toQueue(args, 2), "start");
-			
+
 			if (parsed != null) {
 				state = parsed;
 			} else {
@@ -133,7 +100,7 @@ class CommandProtocol extends CommandBase {
 			sender.sendMessage(ChatColor.RED + "Too many parameters.");
 			return;
 		}
-		
+
 		// Now change the state
 		if (state) {
 			if (manager.startTiming())
@@ -147,23 +114,24 @@ class CommandProtocol extends CommandBase {
 			} else {
 				sender.sendMessage(ChatColor.RED + "Packet timing already stopped.");
 			}
- 		}
+		}
 	}
-	
+
 	private void saveTimings(TimedListenerManager manager) {
 		try {
-			File destination = new File(plugin.getDataFolder(), "Timings - " + System.currentTimeMillis() + ".txt");
+			File destination = new File(plugin.getDataFolder(),
+					"Timings - " + System.currentTimeMillis() + ".txt");
 			TimingReportGenerator generator = new TimingReportGenerator();
-			
+
 			// Print to a text file
 			generator.saveTo(destination, manager);
 			manager.clear();
-			
+
 		} catch (IOException e) {
 			reporter.reportMinimal(plugin, "saveTimings()", e);
 		}
 	}
-	
+
 	/**
 	 * Prevent further automatic updates until the next delay.
 	 */
@@ -173,7 +141,7 @@ class CommandProtocol extends CommandBase {
 		config.setAutoLastTime(currentTime);
 		config.saveAll();
 	}
-	
+
 	public void reloadConfiguration(CommandSender sender) {
 		plugin.reloadConfig();
 		sender.sendMessage(ChatColor.BLUE + "Reloaded configuration!");

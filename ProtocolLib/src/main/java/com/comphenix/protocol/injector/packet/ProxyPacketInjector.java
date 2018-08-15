@@ -59,6 +59,7 @@ import com.comphenix.protocol.wrappers.WrappedIntHashMap;
  * @author Kristian
  */
 class ProxyPacketInjector implements PacketInjector {
+	
 	public static final ReportType REPORT_CANNOT_FIND_READ_PACKET_METHOD = new ReportType("Cannot find read packet method for ID %s.");
 	public static final ReportType REPORT_UNKNOWN_ORIGIN_FOR_PACKET = new ReportType("Timeout: Unknown origin %s for packet %s. Are you using GamePhase.LOGIN?");
 	

@@ -12,23 +12,26 @@ import com.google.common.collect.Multiset;
 
 /**
  * Represents wrappers for Minecraft's own version of Guava.
+ * 
  * @author Kristian
  */
 class GuavaWrappers {
+
 	private static volatile boolean USE_REFLECTION_FALLBACK = false;
-	
+
 	/**
 	 * Wrap a Bukkit multimap around Minecraft's internal multimap.
+	 * 
 	 * @param multimap - the multimap to wrap.
 	 * @return The Bukkit multimap.
 	 */
 	public static <TKey, TValue> Multimap<TKey, TValue> getBukkitMultimap(
-			final net.minecraft.util.com.google.common.collect.Multimap<TKey, TValue> multimap) {
-		
+			final com.google.common.collect.Multimap<TKey, TValue> multimap) {
+
 		if (USE_REFLECTION_FALLBACK) {
 			return GuavaReflection.getBukkitMultimap(multimap);
 		}
-		
+
 		Multimap<TKey, TValue> result = new Multimap<TKey, TValue>() {
 			public Map<TKey, Collection<TValue>> asMap() {
 				return multimap.asMap();
@@ -82,9 +85,10 @@ class GuavaWrappers {
 				return multimap.put(arg0, arg1);
 			}
 
-			public boolean putAll(com.google.common.collect.Multimap<? extends TKey, ? extends TValue> arg0) {
+			public boolean putAll(
+					com.google.common.collect.Multimap<? extends TKey, ? extends TValue> arg0) {
 				boolean result = false;
-				
+
 				// Add each entry
 				for (Entry<? extends TKey, ? extends TValue> entry : arg0.entries()) {
 					result |= multimap.put(entry.getKey(), entry.getValue());
@@ -114,11 +118,11 @@ class GuavaWrappers {
 
 			public Collection<TValue> values() {
 				return multimap.values();
-			}			
+			}
 		};
-		
+
 		try {
-			result.size(); // Test 
+			result.size(); // Test
 			return result;
 		} catch (LinkageError e) {
 			// Occurs on Cauldron 1.7.10
@@ -126,12 +130,13 @@ class GuavaWrappers {
 			return GuavaReflection.getBukkitMultimap(multimap);
 		}
 	}
-	
-	public static <TValue> Multiset<TValue> getBukkitMultiset(final net.minecraft.util.com.google.common.collect.Multiset<TValue> multiset) {
+
+	public static <TValue> Multiset<TValue> getBukkitMultiset(
+			final com.google.common.collect.Multiset<TValue> multiset) {
 		if (USE_REFLECTION_FALLBACK) {
 			return GuavaReflection.getBukkitMultiset(multiset);
 		}
-		
+
 		Multiset<TValue> result = new Multiset<TValue>() {
 			public int add(TValue arg0, int arg1) {
 				return multiset.add(arg0, arg1);
@@ -166,19 +171,17 @@ class GuavaWrappers {
 			}
 
 			public Set<Multiset.Entry<TValue>> entrySet() {
-				return new ConvertedSet<
-					net.minecraft.util.com.google.common.collect.Multiset.Entry<TValue>, 
-					Multiset.Entry<TValue>>
-				(multiset.entrySet()) {
-					
+				return new ConvertedSet<com.google.common.collect.Multiset.Entry<TValue>, Multiset.Entry<TValue>>(
+						multiset.entrySet()) {
+
 					@Override
 					protected com.google.common.collect.Multiset.Entry<TValue> toOuter(
-							net.minecraft.util.com.google.common.collect.Multiset.Entry<TValue> inner) {
+							com.google.common.collect.Multiset.Entry<TValue> inner) {
 						return getBukkitEntry(inner);
 					}
 
 					@Override
-					protected net.minecraft.util.com.google.common.collect.Multiset.Entry<TValue> toInner(
+					protected com.google.common.collect.Multiset.Entry<TValue> toInner(
 							com.google.common.collect.Multiset.Entry<TValue> outer) {
 						throw new UnsupportedOperationException("Cannot convert " + outer);
 					}
@@ -241,17 +244,18 @@ class GuavaWrappers {
 				return multiset.toString();
 			}
 		};
-		
+
 		try {
-			result.size(); // Test 
+			result.size(); // Test
 			return result;
 		} catch (LinkageError e) {
 			USE_REFLECTION_FALLBACK = true;
 			return GuavaReflection.getBukkitMultiset(multiset);
 		}
 	}
-	
-	private static <TValue> Multiset.Entry<TValue> getBukkitEntry(final net.minecraft.util.com.google.common.collect.Multiset.Entry<TValue> entry) {
+
+	private static <TValue> Multiset.Entry<TValue> getBukkitEntry(
+			final com.google.common.collect.Multiset.Entry<TValue> entry) {
 		return new Multiset.Entry<TValue>() {
 			public boolean equals(Object arg0) {
 				return entry.equals(arg0);

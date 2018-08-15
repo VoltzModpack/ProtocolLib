@@ -8,8 +8,9 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
-import net.minecraft.util.io.netty.channel.ChannelOption;
-import net.minecraft.util.io.netty.channel.socket.SocketChannel;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.socket.SocketChannel;
 
 /**
  * This class wraps a Netty {@link Channel} in a {@link Socket}. It overrides
@@ -20,229 +21,230 @@ import net.minecraft.util.io.netty.channel.socket.SocketChannel;
  */
 // Thanks MD5. :)
 class NettySocketAdaptor extends Socket {
-    private final SocketChannel ch;
 
-    private NettySocketAdaptor(SocketChannel ch) {
-        this.ch = ch;
-    }
+	private final SocketChannel ch;
 
-    public static NettySocketAdaptor adapt(SocketChannel ch) {
-        return new NettySocketAdaptor(ch);
-    }
+	private NettySocketAdaptor(SocketChannel ch) {
+		this.ch = ch;
+	}
 
-    @Override
-    public void bind(SocketAddress bindpoint) throws IOException {
-        ch.bind(bindpoint).syncUninterruptibly();
-    }
+	public static NettySocketAdaptor adapt(SocketChannel ch) {
+		return new NettySocketAdaptor(ch);
+	}
 
-    @Override
-    public synchronized void close() throws IOException {
-        ch.close().syncUninterruptibly();
-    }
+	@Override
+	public void bind(SocketAddress bindpoint) throws IOException {
+		ch.bind(bindpoint).syncUninterruptibly();
+	}
 
-    @Override
-    public void connect(SocketAddress endpoint) throws IOException {
-        ch.connect(endpoint).syncUninterruptibly();
-    }
+	@Override
+	public synchronized void close() throws IOException {
+		ch.close().syncUninterruptibly();
+	}
 
-    @Override
-    public void connect(SocketAddress endpoint, int timeout) throws IOException {
-        ch.config().setConnectTimeoutMillis(timeout);
-        ch.connect(endpoint).syncUninterruptibly();
-    }
+	@Override
+	public void connect(SocketAddress endpoint) throws IOException {
+		ch.connect(endpoint).syncUninterruptibly();
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof NettySocketAdaptor && ch.equals(((NettySocketAdaptor) obj).ch);
-    }
+	@Override
+	public void connect(SocketAddress endpoint, int timeout) throws IOException {
+		ch.config().setConnectTimeoutMillis(timeout);
+		ch.connect(endpoint).syncUninterruptibly();
+	}
 
-    @Override
-    public java.nio.channels.SocketChannel getChannel() {
-         throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof NettySocketAdaptor && ch.equals(((NettySocketAdaptor) obj).ch);
+	}
 
-    @Override
-    public InetAddress getInetAddress() {
-        return ch.remoteAddress().getAddress();
-    }
+	@Override
+	public java.nio.channels.SocketChannel getChannel() {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public InputStream getInputStream() throws IOException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public InetAddress getInetAddress() {
+		return ch.remoteAddress().getAddress();
+	}
 
-    @Override
-    public boolean getKeepAlive() throws SocketException {
-        return ch.config().getOption(ChannelOption.SO_KEEPALIVE);
-    }
+	@Override
+	public InputStream getInputStream() throws IOException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public InetAddress getLocalAddress() {
-        return ch.localAddress().getAddress();
-    }
+	@Override
+	public boolean getKeepAlive() throws SocketException {
+		return ch.config().getOption(ChannelOption.SO_KEEPALIVE);
+	}
 
-    @Override
-    public int getLocalPort() {
-        return ch.localAddress().getPort();
-    }
+	@Override
+	public InetAddress getLocalAddress() {
+		return ch.localAddress().getAddress();
+	}
 
-    @Override
-    public SocketAddress getLocalSocketAddress() {
-        return ch.localAddress();
-    }
+	@Override
+	public int getLocalPort() {
+		return ch.localAddress().getPort();
+	}
 
-    @Override
-    public boolean getOOBInline() throws SocketException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public SocketAddress getLocalSocketAddress() {
+		return ch.localAddress();
+	}
 
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public boolean getOOBInline() throws SocketException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public int getPort() {
-        return ch.remoteAddress().getPort();
-    }
+	@Override
+	public OutputStream getOutputStream() throws IOException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public synchronized int getReceiveBufferSize() throws SocketException {
-        return ch.config().getOption(ChannelOption.SO_RCVBUF);
-    }
+	@Override
+	public int getPort() {
+		return ch.remoteAddress().getPort();
+	}
 
-    @Override
-    public SocketAddress getRemoteSocketAddress() {
-        return ch.remoteAddress();
-    }
+	@Override
+	public synchronized int getReceiveBufferSize() throws SocketException {
+		return ch.config().getOption(ChannelOption.SO_RCVBUF);
+	}
 
-    @Override
-    public boolean getReuseAddress() throws SocketException {
-        return ch.config().getOption(ChannelOption.SO_REUSEADDR);
-    }
+	@Override
+	public SocketAddress getRemoteSocketAddress() {
+		return ch.remoteAddress();
+	}
 
-    @Override
-    public synchronized int getSendBufferSize() throws SocketException {
-        return ch.config().getOption(ChannelOption.SO_SNDBUF);
-    }
+	@Override
+	public boolean getReuseAddress() throws SocketException {
+		return ch.config().getOption(ChannelOption.SO_REUSEADDR);
+	}
 
-    @Override
-    public int getSoLinger() throws SocketException {
-        return ch.config().getOption(ChannelOption.SO_LINGER);
-    }
+	@Override
+	public synchronized int getSendBufferSize() throws SocketException {
+		return ch.config().getOption(ChannelOption.SO_SNDBUF);
+	}
 
-    @Override
-    public synchronized int getSoTimeout() throws SocketException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public int getSoLinger() throws SocketException {
+		return ch.config().getOption(ChannelOption.SO_LINGER);
+	}
 
-    @Override
-    public boolean getTcpNoDelay() throws SocketException {
-        return ch.config().getOption(ChannelOption.TCP_NODELAY);
-    }
+	@Override
+	public synchronized int getSoTimeout() throws SocketException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public int getTrafficClass() throws SocketException {
-        return ch.config().getOption(ChannelOption.IP_TOS);
-    }
+	@Override
+	public boolean getTcpNoDelay() throws SocketException {
+		return ch.config().getOption(ChannelOption.TCP_NODELAY);
+	}
 
-    @Override
-    public int hashCode() {
-        return ch.hashCode();
-    }
+	@Override
+	public int getTrafficClass() throws SocketException {
+		return ch.config().getOption(ChannelOption.IP_TOS);
+	}
 
-    @Override
-    public boolean isBound() {
-        return ch.localAddress() != null;
-    }
+	@Override
+	public int hashCode() {
+		return ch.hashCode();
+	}
 
-    @Override
-    public boolean isClosed() {
-        return !ch.isOpen();
-    }
+	@Override
+	public boolean isBound() {
+		return ch.localAddress() != null;
+	}
 
-    @Override
-    public boolean isConnected() {
-        return ch.isActive();
-    }
+	@Override
+	public boolean isClosed() {
+		return !ch.isOpen();
+	}
 
-    @Override
-    public boolean isInputShutdown() {
-        return ch.isInputShutdown();
-    }
+	@Override
+	public boolean isConnected() {
+		return ch.isActive();
+	}
 
-    @Override
-    public boolean isOutputShutdown() {
-        return ch.isOutputShutdown();
-    }
+	@Override
+	public boolean isInputShutdown() {
+		return ch.isInputShutdown();
+	}
 
-    @Override
-    public void sendUrgentData(int data) throws IOException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public boolean isOutputShutdown() {
+		return ch.isOutputShutdown();
+	}
 
-    @Override
-    public void setKeepAlive(boolean on) throws SocketException {
-        ch.config().setOption(ChannelOption.SO_KEEPALIVE, on);
-    }
+	@Override
+	public void sendUrgentData(int data) throws IOException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public void setOOBInline(boolean on) throws SocketException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public void setKeepAlive(boolean on) throws SocketException {
+		ch.config().setOption(ChannelOption.SO_KEEPALIVE, on);
+	}
 
-    @Override
-    public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public void setOOBInline(boolean on) throws SocketException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public synchronized void setReceiveBufferSize(int size) throws SocketException {
-        ch.config().setOption(ChannelOption.SO_RCVBUF, size);
-    }
+	@Override
+	public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public void setReuseAddress(boolean on) throws SocketException {
-        ch.config().setOption(ChannelOption.SO_REUSEADDR, on);
-    }
+	@Override
+	public synchronized void setReceiveBufferSize(int size) throws SocketException {
+		ch.config().setOption(ChannelOption.SO_RCVBUF, size);
+	}
 
-    @Override
-    public synchronized void setSendBufferSize(int size) throws SocketException {
-        ch.config().setOption(ChannelOption.SO_SNDBUF, size);
-    }
+	@Override
+	public void setReuseAddress(boolean on) throws SocketException {
+		ch.config().setOption(ChannelOption.SO_REUSEADDR, on);
+	}
 
-    @Override
-    public void setSoLinger(boolean on, int linger) throws SocketException {
-        ch.config().setOption(ChannelOption.SO_LINGER, linger);
-    }
+	@Override
+	public synchronized void setSendBufferSize(int size) throws SocketException {
+		ch.config().setOption(ChannelOption.SO_SNDBUF, size);
+	}
 
-    @Override
-    public synchronized void setSoTimeout(int timeout) throws SocketException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public void setSoLinger(boolean on, int linger) throws SocketException {
+		ch.config().setOption(ChannelOption.SO_LINGER, linger);
+	}
 
-    @Override
-    public void setTcpNoDelay(boolean on) throws SocketException {
-        ch.config().setOption(ChannelOption.TCP_NODELAY, on);
-    }
+	@Override
+	public synchronized void setSoTimeout(int timeout) throws SocketException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public void setTrafficClass(int tc) throws SocketException {
-        ch.config().setOption(ChannelOption.IP_TOS, tc);
-    }
+	@Override
+	public void setTcpNoDelay(boolean on) throws SocketException {
+		ch.config().setOption(ChannelOption.TCP_NODELAY, on);
+	}
 
-    @Override
-    public void shutdownInput() throws IOException {
-        throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
-    }
+	@Override
+	public void setTrafficClass(int tc) throws SocketException {
+		ch.config().setOption(ChannelOption.IP_TOS, tc);
+	}
 
-    @Override
-    public void shutdownOutput() throws IOException {
-        ch.shutdownOutput().syncUninterruptibly();
-    }
+	@Override
+	public void shutdownInput() throws IOException {
+		throw new UnsupportedOperationException("Operation not supported on Channel wrapper.");
+	}
 
-    @Override
-    public String toString() {
-        return ch.toString();
-    }
+	@Override
+	public void shutdownOutput() throws IOException {
+		ch.shutdownOutput().syncUninterruptibly();
+	}
+
+	@Override
+	public String toString() {
+		return ch.toString();
+	}
 }

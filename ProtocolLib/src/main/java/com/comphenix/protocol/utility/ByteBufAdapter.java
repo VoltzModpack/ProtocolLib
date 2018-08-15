@@ -15,47 +15,50 @@ import java.nio.channels.WritableByteChannel;
 import com.comphenix.protocol.reflect.accessors.Accessors;
 import com.comphenix.protocol.reflect.accessors.FieldAccessor;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.LimitInputStream;
 
-import net.minecraft.util.io.netty.buffer.AbstractByteBuf;
-import net.minecraft.util.io.netty.buffer.ByteBuf;
-import net.minecraft.util.io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.AbstractByteBuf;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 
 /**
  * Construct a ByteBuf around an input stream and an output stream.
  * <p>
- * Note that as streams usually don't support seeking, this implementation will ignore 
- * all indexing in the byte buffer.
+ * Note that as streams usually don't support seeking, this implementation will
+ * ignore all indexing in the byte buffer.
+ * 
  * @author Kristian
  */
 class ByteBufAdapter extends AbstractByteBuf {
+
 	private DataInputStream input;
 	private DataOutputStream output;
-	
+
 	// For modifying the reader or writer index
 	private static FieldAccessor READER_INDEX;
 	private static FieldAccessor WRITER_INDEX;
-	
+
 	private static final int CAPACITY = Short.MAX_VALUE;
-	
+
 	private ByteBufAdapter(DataInputStream input, DataOutputStream output) {
 		// Just pick a figure
 		super(CAPACITY);
 		this.input = input;
 		this.output = output;
-		
+
 		// Prepare accessors
 		try {
 			if (READER_INDEX == null) {
-				READER_INDEX = Accessors.getFieldAccessor(AbstractByteBuf.class.getDeclaredField("readerIndex"));
+				READER_INDEX = Accessors
+						.getFieldAccessor(AbstractByteBuf.class.getDeclaredField("readerIndex"));
 			}
 			if (WRITER_INDEX == null) {
-				WRITER_INDEX = Accessors.getFieldAccessor(AbstractByteBuf.class.getDeclaredField("writerIndex"));
+				WRITER_INDEX = Accessors
+						.getFieldAccessor(AbstractByteBuf.class.getDeclaredField("writerIndex"));
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("Cannot initialize ByteBufAdapter.", e);
 		}
-		
+
 		// "Infinite" reading/writing
 		if (input == null)
 			READER_INDEX.set(this, Integer.MAX_VALUE);
@@ -64,23 +67,27 @@ class ByteBufAdapter extends AbstractByteBuf {
 	}
 
 	/**
-	 * Construct a new Minecraft packet serializer using the current byte buf adapter.
+	 * Construct a new Minecraft packet serializer using the current byte buf
+	 * adapter.
+	 * 
 	 * @param input - the input stream.
 	 * @return A packet serializer with a wrapped byte buf adapter.
 	 */
 	public static ByteBuf packetReader(DataInputStream input) {
 		return MinecraftReflection.getPacketDataSerializer(new ByteBufAdapter(input, null));
 	}
-	
+
 	/**
-	 * Construct a new Minecraft packet deserializer using the current byte buf adapter.
+	 * Construct a new Minecraft packet deserializer using the current byte buf
+	 * adapter.
+	 * 
 	 * @param output - the output stream.
 	 * @return A packet serializer with a wrapped byte buf adapter.
 	 */
 	public static ByteBuf packetWriter(DataOutputStream output) {
 		return MinecraftReflection.getPacketDataSerializer(new ByteBufAdapter(null, output));
 	}
-	
+
 	@Override
 	public int refCnt() {
 		return 1;
@@ -250,14 +257,14 @@ class ByteBufAdapter extends AbstractByteBuf {
 
 	@Override
 	public ByteBuf getBytes(int index, OutputStream dst, int length) throws IOException {
-		ByteStreams.copy(new LimitInputStream(input, length), dst);
+		ByteStreams.copy(ByteStreams.limit(input, length), dst);
 		return this;
 	}
 
 	@Override
 	public int getBytes(int index, GatheringByteChannel out, int length) throws IOException {
-		byte[] data = ByteStreams.toByteArray(new LimitInputStream(input, length));
-		
+		byte[] data = ByteStreams.toByteArray(ByteStreams.limit(input, length));
+
 		out.write(ByteBuffer.wrap(data));
 		return data.length;
 	}
@@ -266,7 +273,7 @@ class ByteBufAdapter extends AbstractByteBuf {
 	public ByteBuf setBytes(int index, ByteBuf src, int srcIndex, int length) {
 		byte[] buffer = new byte[length];
 		src.getBytes(srcIndex, buffer);
-		
+
 		try {
 			output.write(buffer);
 			return this;
@@ -299,7 +306,7 @@ class ByteBufAdapter extends AbstractByteBuf {
 
 	@Override
 	public int setBytes(int index, InputStream in, int length) throws IOException {
-		LimitInputStream limit = new LimitInputStream(in, length);
+		InputStream limit = ByteStreams.limit(input, length);
 		ByteStreams.copy(limit, output);
 		return length - limit.available();
 	}
@@ -308,7 +315,7 @@ class ByteBufAdapter extends AbstractByteBuf {
 	public int setBytes(int index, ScatteringByteChannel in, int length) throws IOException {
 		ByteBuffer buffer = ByteBuffer.allocate(length);
 		WritableByteChannel channel = Channels.newChannel(output);
-		
+
 		int count = in.read(buffer);
 		channel.write(buffer);
 		return count;
